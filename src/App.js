@@ -1,11 +1,11 @@
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, HashRouter, Route, Routes } from "react-router-dom";
 import { Home, Profile } from "./page";
 import { Header } from "./component";
 
 function App() {
   return (
     <div>
-      <BrowserRouter>
+      <HashRouter>
         <Header />
         <div className="pt-20 h-screen">
           <Routes>
@@ -13,7 +13,7 @@ function App() {
             <Route path="/profile" element={<Profile />} />
           </Routes>
         </div>
-      </BrowserRouter>
+      </HashRouter>
     </div>
   );
 }

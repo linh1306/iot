@@ -1,5 +1,6 @@
 {
   "name": "nguyen_van_linh_b20dccn399",
+  "homepage": "https://linh1306.github.io/iot/",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
@@ -20,6 +21,7 @@
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
+    "deploy": "npm run build && npx gh-pages -d build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },

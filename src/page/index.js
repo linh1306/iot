@@ -1,2 +1,6 @@
-export {default as Home} from './home/Home'
-export {default as Profile} from './profile/Profile'
+export { default as Home } from './home/Home'
+export { default as Profile } from './profile/Profile'
+export { default as Login } from './login/Login'
+export { default as PageAccount } from './pageAccount/PageAccount'
+export { default as ManageUser } from './manageUser/ManageUser'
+export { default as Page404 } from './page404/Page404'

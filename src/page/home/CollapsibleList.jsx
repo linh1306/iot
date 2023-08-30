@@ -1,12 +1,15 @@
-import React, { useState } from 'react';
+import { elements } from 'chart.js';
+import React, { useEffect, useState } from 'react';
+import ToastConfig from '../../component/toast/ToastConfig';
 
-const CollapsibleList = ({ data, limit, setLimit, timeChange, setTimeChange }) => {
+const CollapsibleList = ({ data, limit, setLimit, setTemplate, timeChange, setTimeChange, switchs, setSize, handlePushMesMqtt }) => {
   const [index, setIndex] = useState(-1)
   const [indexItem, setIndexItem] = useState(-1)
   const [min, setMin] = useState(0)
   const [max, setMax] = useState(0)
-  const [time, setTime] = useState(timeChange)
-  const [devices, setDevices] = useState([{ name: 'Đèn', status: false }, { name: 'Quạt', status: false }])
+  const [text, setText] = useState("")
+  const [devices, setDevices] = useState({})
+  const [showCreateGpioIot, setShowCreateGpioIot] = useState(false)
 
   const handleClickItemChangeLimit = (index) => {
     setIndexItem(prop => prop === index ? -1 : index)
@@ -42,18 +45,33 @@ const CollapsibleList = ({ data, limit, setLimit, timeChange, setTimeChange }) =
     setIndexItem(-1)
   }
 
-  const handleChangeDevices = (index) => {
-    setDevices(prop => {
-      const tmp = []
-      prop.forEach((element, indexElement) => {
-        const item = { ...element }
-        if (indexElement === index) {
-          item.status = !item.status
-        }
-        tmp.push(item)
-      });
-      return tmp
+  const handleUpdateListDevices = () => {
+    const tmpArr = {}
+    data.forEach(element => {
+      tmpArr[element.name] = { value: true, gpio: element.gpio }
+    });
+    limit.forEach(element => {
+      if (!(element.name in tmpArr)) {
+        tmpArr[element.name] = { value: false, gpio: 0 }
+      }
+    });
+    switchs.forEach(element => {
+      tmpArr[element.name] = { value: true, gpio: element.gpio }
     })
+    delete tmpArr["Nhiệt độ"];
+    handleChangeIndex(2)
+    setShowCreateGpioIot(false)
+    setDevices(tmpArr)
+    setText("")
+  }
+
+  const handlePubGpio = () => {
+    let mess = ""
+    Object.entries(devices).forEach(([key, value]) => {
+      if (value.value && value.gpio > 0) mess += key + "-" + value.gpio + "/"
+    })
+    handlePushMesMqtt(mess.slice(0, -1))
+    console.log();
   }
 
   return (
@@ -61,13 +79,13 @@ const CollapsibleList = ({ data, limit, setLimit, timeChange, setTimeChange }) =
       {/* 1 */}
       <div>
         <div onClick={() => handleChangeIndex(0)} className='flex justify-between cursor-pointer mb-2'>
-          <div className={`border-b-2 transition-all duration-500 ${index === 0 ?' border-[#ffa500] textNeon':' border-white text-white'}`}>Change limit</div>
-          <div><i className={`fa-solid fa-caret-${index === 0 ? 'up' : 'down'}`}></i></div>
+          <div className={`border-b-2 transition-all duration-500 ${index === 0 ? 'flex-1 whitespace-nowrap border-[#ffa500] textNeon' : ' border-white text-white'}`}>Change limit</div>
+          <div><i className={`fa-solid fa-caret-down transition-all  ${index === 0 ? ' rotate-180 delay-100 text-[#ffa500]' : ' rotate-0'}`}></i></div>
         </div>
         <div className={`pl-2 overflow-hidden flex flex-col gap-1 ${index === 0 ? 'p-2' : 'h-0'}`}>
-          {data.map((item, index) => (
+          {limit.map((item, index) => (
             <div key={index}>
-              <div onClick={() => handleClickItemChangeLimit(index)} className={`cursor-pointer transition-all duration-500 ${index === indexItem ?'textNeon2':' text-white'}`}>{item.name}</div>
+              <div onClick={() => handleClickItemChangeLimit(index)} className={`cursor-pointer transition-all duration-500 ${index === indexItem ? 'textNeon2' : ' text-white'}`}>{item.name}</div>
               <div className={`overflow-hidden pl-2 flex gap-1 ${index === indexItem ? 'h-15 p-2' : 'h-0'}`}>
                 <div className='flex flex-col gap-1'>
                   <div className='text-black flex gap-1'>
@@ -94,35 +112,86 @@ const CollapsibleList = ({ data, limit, setLimit, timeChange, setTimeChange }) =
       {/* 2 */}
       <div>
         <div onClick={() => handleChangeIndex(1)} className='flex justify-between cursor-pointer mb-2'>
-          <div className={`border-b-2 transition-all duration-500 ${index === 1 ?' border-[#ffa500] textNeon':' border-white text-white'}`}>Time change</div>
-          <div><i className={`fa-solid fa-caret-${index === 1 ? 'up' : 'down'}`}></i></div>
+          <div className={`border-b-2 transition-all duration-500 ${index === 1 ? 'flex-1 whitespace-nowrap border-[#ffa500] textNeon' : ' border-white text-white'}`}>Size change</div>
+          <div><i className={`fa-solid fa-caret-down transition-all  ${index === 1 ? ' rotate-180 delay-100 text-[#ffa500]' : ' rotate-0'}`}></i></div>
         </div>
         <div className={`pl-2 overflow-hidden flex flex-col gap-1 ${index === 1 ? 'p-2' : 'h-0'}`}>
-          <div className='flex'>
-            <div className='text-black flex gap-1'>
-              <button onClick={() => setTime(time - 100)} className='w-10 h-6 rounded-sm bg-blue-500 font-bold text-xs text-white'>-100</button>
-              <input onChange={(e) => setTime(e.target.value)} className='text-black w-10' type="number" value={time} />
-              <button onClick={() => setTime(time + 100)} className='w-10 h-6 rounded-sm bg-blue-500 font-bold text-xs text-white'>+100</button>
-            </div>
-            <div className='flex-1 flex justify-center items-center'>
-              <button onClick={() => setTimeChange(time)} className='py2 px-3 bg-green-400 rounded-lg active:scale-95'>Ok</button>
-            </div>
+          <div className='flex justify-center gap-3'>
+            <button onClick={() => setSize(prop => prop - 1)} className='w-10 bg-blue-400 rounded-lg active:scale-95'>-</button>
+            <button onClick={() => setSize(prop => prop + 1)} className='w-10 bg-blue-400 rounded-lg active:scale-95'>+</button>
           </div>
         </div>
       </div>
       {/* 3 */}
       <div>
-        <div onClick={() => handleChangeIndex(2)} className='flex justify-between cursor-pointer mb-2'>
-          <div className={`border-b-2 transition-all duration-500 ${index === 2 ?' border-[#ffa500] textNeon':' border-white text-white'}`}>Switch</div>
-          <div><i className={`fa-solid fa-caret-${index === 2 ? 'up' : 'down'}`}></i></div>
+        <div onClick={() => handleUpdateListDevices()} className='flex justify-between cursor-pointer mb-2'>
+          <div className={`border-b-2 transition-all duration-500 ${index === 2 ? 'flex-1 whitespace-nowrap border-[#ffa500] textNeon' : ' border-white text-white'}`}>Gpio config</div>
+          <div><i className={`fa-solid fa-caret-down transition-all  ${index === 2 ? ' rotate-180 delay-100 text-[#ffa500]' : ' rotate-0'}`}></i></div>
         </div>
         <div className={`overflow-hidden flex flex-col gap-1 ${index === 2 ? 'p-2' : 'h-0'}`}>
-          {devices.map((item, index) => (
-            <div key={index} className='flex justify-between items-center'>
-              <div>{item.name}</div>
-              <div onClick={() => handleChangeDevices(index)} className={`w-8 h-[20px] rounded-md cursor-pointer flex justify-center items-center text-xs ${item.status ? 'bg-green-400 boxNeon' : 'bg-red-400'}`}>{item.status ? 'On' : 'Off'}</div>
+          {Object.entries(devices).map(([key, value, index]) => (
+            <div key={key} className='flex justify-between items-center'>
+              <div className='flex-[2]'>{key}</div>
+              <div className='flex-1 flex justify-between items-center'>
+                <input className='w-10 text-black' onChange={(e) => {
+                  setDevices(prop => {
+                    const tmpObj = { ...prop }
+                    tmpObj[key] = { ...prop[key], gpio: e.target.value }
+                    return tmpObj
+                  })
+                }} type="numb" value={value.gpio} />
+                <input onClick={() => {
+                  if (value.gpio == 0) {
+                    ToastConfig("Chân gpio phải lớn hơn 0", "warning")
+                  } else {
+                    setDevices(prop => {
+                      const tmpObj = { ...prop }
+                      tmpObj[key] = { ...prop[key], value: !value.value }
+                      return tmpObj
+                    })
+                  }
+                }} type="checkbox" checked={value.value && value.gpio > 0} />
+              </div>
             </div>
           ))}
+          <div className='flex justify-center gap-2 mt-2'>
+            <div className={`transition-all ${showCreateGpioIot ? 'max-w-[100px]' : 'max-w-[0]'}`}>
+              <input className={`w-full rounded-full text-black ${showCreateGpioIot ? 'pl-2' : ''}`} type="text" onChange={(e) => setText(e.target.value)} value={text} />
+            </div>
+            <div className='flex gap-2'>
+              <button onClick={() => {
+                if (text !== "") {
+                  setDevices(prop => {
+                    const tmpObj = { ...prop }
+                    tmpObj[text] = { value: false, gpio: 0 }
+                    return tmpObj
+                  })
+                  setText("")
+                }
+                setShowCreateGpioIot(prop => !prop)
+              }} className='w-10 bg-blue-400 rounded-lg'>+</button>
+              <button className='w-10 bg-green-400 rounded-lg' onClick={() => handlePubGpio()}>Ok</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      {/* 4 */}
+      <div>
+        <div onClick={() => handleChangeIndex(3)} className='flex justify-between cursor-pointer mb-2'>
+          <div className={`border-b-2 transition-all duration-500 ${index === 3 ? 'flex-1 whitespace-nowrap border-[#ffa500] textNeon' : ' border-white text-white'}`}>Page</div>
+          <div><i className={`fa-solid fa-caret-down transition-all  ${index === 3 ? ' rotate-180 delay-100 text-[#ffa500]' : ' rotate-0'}`}></i></div>
+        </div>
+        <div className={`pl-2 overflow-hidden flex flex-col gap-1 ${index === 3 ? 'p-2' : 'h-0'}`}>
+          <div className='flex flex-col gap-3'>
+            <div onClick={() => {
+              setTemplate(0)
+              setIndexItem(0)
+            }} className={`cursor-pointer transition-all duration-500 ${1 !== indexItem ? 'textNeon2' :' text-white' }`}>Home</div>
+            <div onClick={() => {
+              setTemplate(1)
+              setIndexItem(1)
+            }} className={`cursor-pointer transition-all duration-500 ${1 === indexItem ? 'textNeon2' : ' text-white'}`}>History</div>
+          </div>
         </div>
       </div>
     </div >

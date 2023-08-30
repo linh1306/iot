@@ -25,3 +25,11 @@
 .boxNeon{
   box-shadow:0 0 2px #65de61, 0 0 5px #75c272, 0 0 7px #65de61, 0 0 12px #84c873;
 }
+::-webkit-scrollbar {
+  width: 5px; /* Điều chỉnh chiều rộng thanh cuộn */
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: #888; /* Màu nền của thanh cuộn */
+  border-radius: 999px; /* Bo tròn góc */
+}

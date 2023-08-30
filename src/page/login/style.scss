@@ -1,0 +1,25 @@
+.input{
+  input:not(:placeholder-shown) +label{
+    color: #64748b;
+    background-color: white;
+    font-size: 8px;
+    padding: 1px 3px;
+    left: 18px;
+    line-height: 12px;
+    transform: translateY(-9px);
+    border: 1px solid #64748b;
+  }
+  input:focus + label{
+    color: #00d9ff;
+    background-color: white;
+    font-size: 8px;
+    padding: 1px 3px;
+    left: 18px;
+    line-height: 12px;
+    transform: translateY(-9px);
+    border: 1px solid #00d9ff;
+  }
+  &:focus-within{
+    border: 2px solid #00d9ff;
+  }
+}

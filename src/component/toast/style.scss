@@ -1,0 +1,30 @@
+@keyframes time-toast {
+  0% {
+    width: 100%;
+  }
+
+  100% {
+    width: 0;
+  }
+}
+
+@keyframes show-toast {
+  0% {
+    transform: translateX(100%);
+  }
+  5% {
+    transform: translateX(-3%);
+  }
+  7% {
+    transform: translateX(0%);
+  }
+  93% {
+    transform: translateX(0%);
+  }
+  95% {
+    transform: translateX(-3%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
